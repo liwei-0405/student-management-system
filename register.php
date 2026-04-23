@@ -6,32 +6,13 @@
     <title>Register</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="assets/style.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 </head>
 <body>
-<style>
-        .alert-success{
-            width: 500px;
-            margin-left: 300px;
-        }
-        form {
-            width: 500px;
-            margin-left: 300px;
-        }
-        button a{
-            color: #fff;
-            text-decoration: none;
-        }
-        p {
-            text-align: center;
-            font-size: 18px;
-            color: red;
-            font-family: Arial, sans-serif;
-        }
-    </style>
-<div class="container mt-5">
+<div class="container mt-5 auth-container">
     <h2 class="text-center mb-4">Register</h2>
-    <p>If You Have Any Account Please Login</p>
+    <p class="auth-message">If You Have Any Account Please Login</p>
     <?php
     // Include database connection
     include 'db.php';

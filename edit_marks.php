@@ -53,13 +53,37 @@ if (isset($_POST['update'])) {
     
     <form method="POST" action="" class="card p-4">
         <div class="mb-3">
-            <label for="student_id" class="form-label">Student ID</label>
-            <input type="text" class="form-control" name="student_id" id="student_id" value="<?php echo $row['student_id']; ?>" required>
+            <label for="student_id" class="form-label">Student</label>
+            <select class="form-control" name="student_id" id="student_id" required>
+                <option value="">Select Student</option>
+                <?php
+                $student_query = "SELECT id, student_name, enrollment_no FROM students";
+                $student_result = $conn->query($student_query);
+                if ($student_result->num_rows > 0) {
+                    while($s_row = $student_result->fetch_assoc()) {
+                        $selected = ($s_row['id'] == $row['student_id']) ? "selected" : "";
+                        echo "<option value='".$s_row['id']."' $selected>".$s_row['student_name']." (".$s_row['enrollment_no'].")</option>";
+                    }
+                }
+                ?>
+            </select>
         </div>
 
         <div class="mb-3">
-            <label for="subject_id" class="form-label">Subject ID</label>
-            <input type="text" class="form-control" name="subject_id" id="subject_id" value="<?php echo $row['subject_id']; ?>" required>
+            <label for="subject_id" class="form-label">Subject</label>
+            <select class="form-control" name="subject_id" id="subject_id" required>
+                <option value="">Select Subject</option>
+                <?php
+                $subject_query = "SELECT id, subject_name FROM subjects";
+                $subject_result = $conn->query($subject_query);
+                if ($subject_result->num_rows > 0) {
+                    while($sub_row = $subject_result->fetch_assoc()) {
+                        $selected = ($sub_row['id'] == $row['subject_id']) ? "selected" : "";
+                        echo "<option value='".$sub_row['id']."' $selected>".$sub_row['subject_name']."</option>";
+                    }
+                }
+                ?>
+            </select>
         </div>
 
         <div class="mb-3">

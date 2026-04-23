@@ -6,32 +6,13 @@
     <title>Login</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="assets/style.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 </head>
 <body>
-    <style>
-        .alert-danger{
-            width: 500px;
-            margin-left: 300px;
-        }
-        form {
-            width: 500px;
-            margin-left: 300px;
-        }
-        button a{
-            color: #fff;
-            text-decoration: none;
-        }
-        p {
-            text-align: center;
-            font-size: 18px;
-            color: red;
-            font-family: Arial, sans-serif;
-        }
-    </style>
-<div class="container mt-5">
+<div class="container mt-5 auth-container">
     <h2 class="text-center mb-4">Login</h2>
-        <p>If You Don't Have Any Account Please Register</p>
+        <p class="auth-message">If You Don't Have Any Account Please Register</p>
     <?php
     // Start the session
     session_start();

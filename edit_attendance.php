@@ -28,8 +28,20 @@
 
         <form action="edit_attendance.php?id=<?php echo $id; ?>" method="POST">
             <div class="mb-3">
-                <label for="student_id" class="form-label">Student ID</label>
-                <input type="number" class="form-control" id="student_id" name="student_id" value="<?php echo $row['student_id']; ?>" required>
+                <label for="student_id" class="form-label">Student</label>
+                <select class="form-control" id="student_id" name="student_id" required>
+                    <option value="">Select Student</option>
+                    <?php
+                    $student_query = "SELECT id, student_name, enrollment_no FROM students";
+                    $student_result = $conn->query($student_query);
+                    if ($student_result->num_rows > 0) {
+                        while($s_row = $student_result->fetch_assoc()) {
+                            $selected = ($s_row['id'] == $row['student_id']) ? "selected" : "";
+                            echo "<option value='".$s_row['id']."' $selected>".$s_row['student_name']." (".$s_row['enrollment_no'].")</option>";
+                        }
+                    }
+                    ?>
+                </select>
             </div>
             <div class="mb-3">
                 <label for="attendance_date" class="form-label">Attendance Date</label>
