@@ -1,17 +1,9 @@
 <?php
 include 'db.php';
+include 'includes/auth.php';
 
 $sql = "SELECT * FROM marks";
 $result = $conn->query($sql);
-
-session_start();
-
-// Check if the user is logged in
-if (!isset($_SESSION['username'])) {
-    header("Location: login.php"); // Redirect to login page if not logged in
-    exit();
-}
-
 ?>
 
 <!DOCTYPE html>
@@ -25,19 +17,7 @@ if (!isset($_SESSION['username'])) {
     <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-    <div class="sidebar">
-        <h4><b>Navigation</b></h4>
-        <a href="index.php">Home</a>
-        <a href="add_attendance.php">Add Attendance</a>
-        <a href="view_attendance.php">View Attendance</a>
-        <a href="add_marks.php">Add Marks</a>
-        <a href="view_marks.php">View Marks</a>
-        <a href="add_student.php">Add Student</a>
-        <a href="view_students.php">View Students</a>
-        <a href="add_subject.php">Add Subject</a>
-        <a href="view_subjects.php">View Subjects</a>
-        <a href="logout.php" class="nav-link" style="color: black;"><i class="fas fa-sign-out-alt"></i> Logout</a>
-    </div>
+    <?php include 'includes/sidebar.php'; ?>
 
     <div class="content">
         <h2>Marks Records</h2>

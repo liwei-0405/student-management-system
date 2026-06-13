@@ -26,6 +26,16 @@ body {
     background-color: #ddd;
 }
 
+.sidebar a.active {
+    background-color: #34a1eb;
+    color: #fff;
+    font-weight: bold;
+}
+
+.sidebar .logout-link {
+    color: #000;
+}
+
 /* Main Content Area */
 .content {
     flex-grow: 1;
