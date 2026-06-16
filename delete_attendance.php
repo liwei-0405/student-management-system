@@ -1,18 +1,19 @@
 <?php
 include 'db.php';
 include 'includes/auth.php';
+include 'includes/helpers.php';
 
-if (isset($_GET['id'])) {
-    $id = $_GET['id'];
-    $sql = "DELETE FROM attendance WHERE id = $id";
-
-    if ($conn->query($sql) === TRUE) {
-        echo "Attendance deleted successfully";
-        header('Location: view_attendance.php');
-    } else {
-        echo "Error: " . $sql . "<br>" . $conn->error;
-    }
-
-    $conn->close();
+if (!isset($_GET['id'])) {
+    redirectWithStatus('view_attendance.php', 'warning', 'No attendance record selected for deletion.');
 }
+
+$id = (int) $_GET['id'];
+$delete_stmt = $conn->prepare("DELETE FROM attendance WHERE id = ?");
+$delete_stmt->bind_param("i", $id);
+
+if ($delete_stmt->execute()) {
+    redirectWithStatus('view_attendance.php', 'success', 'Attendance record deleted successfully.');
+}
+
+redirectWithStatus('view_attendance.php', 'danger', 'Unable to delete attendance record. Please try again.');
 ?>

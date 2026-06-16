@@ -42,6 +42,19 @@ body {
     padding: 20px;
 }
 
+.filter-form {
+    align-items: end;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 16px;
+}
+
+.filter-actions {
+    display: flex;
+    gap: 8px;
+}
+
 /* Dashboard Specific Styles */
 header {
     color: black;
