@@ -1,40 +1,41 @@
 <?php
-session_start();
 include 'db.php';
 include 'includes/auth.php';
+include 'includes/helpers.php';
 
 $error_message = '';
 $success_message = '';
 
-// Backend Validation Logic
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $student_id = intval($_POST['student_id']);
-    $subject_id = intval($_POST['subject_id']); // Subject added
-    $attendance_date = $_POST['attendance_date'];
-    $status = $_POST['status'];
+    $student_id = filter_input(INPUT_POST, 'student_id', FILTER_VALIDATE_INT);
+    $subject_id = filter_input(INPUT_POST, 'subject_id', FILTER_VALIDATE_INT);
+    $attendance_date = $_POST['attendance_date'] ?? '';
+    $status = $_POST['status'] ?? '';
 
     $current_date = date('Y-m-d');
     $min_date = date('Y-m-d', strtotime('-30 days'));
 
-    if ($status !== 'Present' && $status !== 'Absent') {
+    if (!$student_id || !$subject_id) {
+        $error_message = "Please select a valid student and subject.";
+    } elseif ($status !== 'Present' && $status !== 'Absent') {
         $error_message = "Invalid attendance status selected.";
     } elseif ($attendance_date > $current_date) {
         $error_message = "Attendance date cannot be in the future.";
     } elseif ($attendance_date < $min_date) {
         $error_message = "Attendance date cannot be more than 30 days in the past.";
     } else {
-        // Convert string back to database integer (1 for Present, 0 for Absent)
         $db_status = ($status === 'Present') ? 1 : 0;
 
-        // Prepared statement to prevent SQL Injection
         $stmt = $conn->prepare("INSERT INTO attendance (student_id, subject_id, attendance_date, attendance) VALUES (?, ?, ?, ?)");
         $stmt->bind_param("iisi", $student_id, $subject_id, $attendance_date, $db_status);
-        
+
         if ($stmt->execute()) {
             $success_message = "Attendance added successfully.";
         } else {
-            $error_message = "Error: Failed to save attendance record.";
+            $error_message = "Failed to save attendance record. Please try again.";
         }
+
+        $stmt->close();
     }
 }
 ?>
@@ -55,10 +56,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="content">
         <h2>Add Attendance</h2>
         
-        <?php 
-        if ($error_message) echo "<div class='alert alert-danger'>$error_message</div>";
-        if ($success_message) echo "<div class='alert alert-success'>$success_message</div>";
-        ?>
+        <?php if ($error_message !== '') { ?>
+            <div class="alert alert-danger"><?php echo e($error_message); ?></div>
+        <?php } ?>
+        <?php if ($success_message !== '') { ?>
+            <div class="alert alert-success"><?php echo e($success_message); ?></div>
+        <?php } ?>
 
         <form action="add_attendance.php" method="POST">
             <div class="mb-3">
@@ -70,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $student_result = $conn->query($student_query);
                     if ($student_result->num_rows > 0) {
                         while($row = $student_result->fetch_assoc()) {
-                            echo "<option value='".$row['id']."'>".$row['student_name']." (".$row['enrollment_no'].")</option>";
+                            echo '<option value="' . e($row['id']) . '">' . e($row['student_name'] . ' (' . $row['enrollment_no'] . ')') . '</option>';
                         }
                     }
                     ?>
@@ -86,7 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $subject_result = $conn->query($subject_query);
                     if ($subject_result->num_rows > 0) {
                         while($row = $subject_result->fetch_assoc()) {
-                            echo "<option value='".$row['id']."'>".$row['subject_name']."</option>";
+                            echo '<option value="' . e($row['id']) . '">' . e($row['subject_name']) . '</option>';
                         }
                     }
                     ?>

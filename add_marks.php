@@ -1,23 +1,23 @@
 <?php
-session_start();
 include 'db.php';
 include 'includes/auth.php';
+include 'includes/helpers.php';
 
 $error_message = '';
 $success_message = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $student_id = intval($_POST['student_id']);
-    $subject_id = intval($_POST['subject_id']);
-    $marks = $_POST['marks'];
+    $student_id = filter_input(INPUT_POST, 'student_id', FILTER_VALIDATE_INT);
+    $subject_id = filter_input(INPUT_POST, 'subject_id', FILTER_VALIDATE_INT);
+    $marks = $_POST['marks'] ?? '';
 
-    // Member 3: Range Validation
-    if (!is_numeric($marks) || $marks < 0 || $marks > 100) {
+    if (!$student_id || !$subject_id) {
+        $error_message = "Please select a valid student and subject.";
+    } elseif (!is_numeric($marks) || (float) $marks < 0 || (float) $marks > 100) {
         $error_message = "Invalid marks. Please enter a value between 0 and 100.";
     } else {
-        $marks = floatval($marks);
+        $marks = round((float) $marks, 2);
 
-        // Member 3: Prevent Duplicate Records
         $check_stmt = $conn->prepare("SELECT id FROM marks WHERE student_id = ? AND subject_id = ?");
         $check_stmt->bind_param("ii", $student_id, $subject_id);
         $check_stmt->execute();
@@ -26,16 +26,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($check_stmt->num_rows > 0) {
             $error_message = "Marks already exist for this student in this subject. Please edit the existing record.";
         } else {
-            // Prepared Statement for Security
             $insert_stmt = $conn->prepare("INSERT INTO marks (student_id, subject_id, marks) VALUES (?, ?, ?)");
             $insert_stmt->bind_param("iid", $student_id, $subject_id, $marks);
-            
+
             if ($insert_stmt->execute()) {
                 $success_message = "Marks added successfully.";
             } else {
-                $error_message = "Error: Failed to save marks record.";
+                $error_message = "Failed to save marks record. Please try again.";
             }
+
+            $insert_stmt->close();
         }
+
+        $check_stmt->close();
     }
 }
 ?>
@@ -56,10 +59,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="content">
         <h2>Add Student Marks</h2>
         
-        <?php 
-        if ($error_message) echo "<div class='alert alert-danger'>$error_message</div>";
-        if ($success_message) echo "<div class='alert alert-success'>$success_message</div>";
-        ?>
+        <?php if ($error_message !== '') { ?>
+            <div class="alert alert-danger"><?php echo e($error_message); ?></div>
+        <?php } ?>
+        <?php if ($success_message !== '') { ?>
+            <div class="alert alert-success"><?php echo e($success_message); ?></div>
+        <?php } ?>
 
         <form action="add_marks.php" method="POST">
             <div class="mb-3">
@@ -71,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $student_result = $conn->query($student_query);
                     if ($student_result->num_rows > 0) {
                         while($row = $student_result->fetch_assoc()) {
-                            echo "<option value='".$row['id']."'>".$row['student_name']." (".$row['enrollment_no'].")</option>";
+                            echo '<option value="' . e($row['id']) . '">' . e($row['student_name'] . ' (' . $row['enrollment_no'] . ')') . '</option>';
                         }
                     }
                     ?>
@@ -87,7 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $subject_result = $conn->query($subject_query);
                     if ($subject_result->num_rows > 0) {
                         while($row = $subject_result->fetch_assoc()) {
-                            echo "<option value='".$row['id']."'>".$row['subject_name']."</option>";
+                            echo '<option value="' . e($row['id']) . '">' . e($row['subject_name']) . '</option>';
                         }
                     }
                     ?>
@@ -96,7 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div class="mb-3">
                 <label for="marks" class="form-label">Marks (0-100)</label>
-                <input type="number" step="0.1" class="form-control" id="marks" name="marks" min="0" max="100" required>
+                <input type="number" step="0.01" class="form-control" id="marks" name="marks" min="0" max="100" required>
             </div>
             
             <button type="submit" class="btn btn-primary">Add Marks</button>

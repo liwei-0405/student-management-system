@@ -1,11 +1,15 @@
 <?php
 include 'db.php';
 include 'includes/auth.php';
-include 'includes/helpers.php'; // Member 4's helper functions
+include 'includes/helpers.php';
 
 $search = trim($_GET['search'] ?? '');
+$subject_id = trim($_GET['subject_id'] ?? '');
 $attendance_date = trim($_GET['attendance_date'] ?? '');
 $attendance_status = trim($_GET['attendance_status'] ?? '');
+if ($subject_id !== '' && !ctype_digit($subject_id)) {
+    $subject_id = '';
+}
 if (!in_array($attendance_status, ['', '0', '1'], true)) {
     $attendance_status = '';
 }
@@ -14,11 +18,18 @@ $types = '';
 $params = [];
 
 if ($search !== '') {
-    $where[] = "(students.student_name LIKE ? OR students.enrollment_no LIKE ?)";
+    $where[] = "(students.student_name LIKE ? OR students.enrollment_no LIKE ? OR subjects.subject_name LIKE ?)";
     $search_term = '%' . $search . '%';
     $params[] = $search_term;
     $params[] = $search_term;
-    $types .= 'ss';
+    $params[] = $search_term;
+    $types .= 'sss';
+}
+
+if ($subject_id !== '') {
+    $where[] = "attendance.subject_id = ?";
+    $params[] = $subject_id;
+    $types .= 'i';
 }
 
 if ($attendance_date !== '') {
@@ -33,13 +44,12 @@ if ($attendance_status !== '') {
     $types .= 'i';
 }
 
-// Member 3 Enhancement: Added subjects JOIN and subject_name to SELECT
-$sql = "SELECT attendance.id, attendance.attendance_date, attendance.attendance, 
+$sql = "SELECT attendance.id, attendance.attendance_date, attendance.attendance,
                students.student_name, students.enrollment_no,
                subjects.subject_name
         FROM attendance
         LEFT JOIN students ON attendance.student_id = students.id
-        LEFT JOIN subjects ON attendance.subject_id = subjects.id"; // Subject JOIN
+        LEFT JOIN subjects ON attendance.subject_id = subjects.id";
 
 if (!empty($where)) {
     $sql .= " WHERE " . implode(" AND ", $where);
@@ -52,6 +62,8 @@ if (!empty($types)) {
 }
 $stmt->execute();
 $result = $stmt->get_result();
+
+$subject_result = $conn->query("SELECT id, subject_name FROM subjects ORDER BY subject_name ASC");
 ?>
 
 <!DOCTYPE html>
@@ -69,16 +81,29 @@ $result = $stmt->get_result();
 
     <div class="content">
         <h2>Attendance Records</h2>
-        <?php displayStatusMessage(); ?> <form method="GET" action="view_attendance.php" class="filter-form row g-3 mb-4">
-            <div class="col-md-4">
+        <?php displayStatusMessage(); ?>
+
+        <form method="GET" action="view_attendance.php" class="filter-form row g-3 mb-4">
+            <div class="col-md-3">
                 <label for="search" class="form-label">Search Student</label>
-                <input type="text" class="form-control" id="search" name="search" value="<?php echo e($search); ?>" placeholder="Name or enrollment no">
+                <input type="text" class="form-control" id="search" name="search" value="<?php echo e($search); ?>" placeholder="Student or subject">
             </div>
             <div class="col-md-3">
+                <label for="subject_id" class="form-label">Subject</label>
+                <select class="form-control" id="subject_id" name="subject_id">
+                    <option value="">All Subjects</option>
+                    <?php while ($subject = $subject_result->fetch_assoc()) { ?>
+                        <option value="<?php echo e($subject['id']); ?>" <?php echo $subject_id === (string) $subject['id'] ? 'selected' : ''; ?>>
+                            <?php echo e($subject['subject_name']); ?>
+                        </option>
+                    <?php } ?>
+                </select>
+            </div>
+            <div class="col-md-2">
                 <label for="attendance_date" class="form-label">Date</label>
                 <input type="date" class="form-control" id="attendance_date" name="attendance_date" value="<?php echo e($attendance_date); ?>">
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label for="attendance_status" class="form-label">Status</label>
                 <select class="form-control" id="attendance_status" name="attendance_status">
                     <option value="">All Status</option>
@@ -87,8 +112,8 @@ $result = $stmt->get_result();
                 </select>
             </div>
             <div class="col-md-2 filter-actions">
-                <button type="submit" class="btn btn-primary mt-4">Filter</button>
-                <a href="view_attendance.php" class="btn btn-secondary mt-4">Reset</a>
+                <button type="submit" class="btn btn-primary">Filter</button>
+                <a href="view_attendance.php" class="btn btn-secondary">Reset</a>
             </div>
         </form>
 
@@ -97,7 +122,8 @@ $result = $stmt->get_result();
                 <tr>
                     <th>ID</th>
                     <th>Student</th>
-                    <th>Subject</th> <th>Date</th>
+                    <th>Subject</th>
+                    <th>Date</th>
                     <th>Attendance</th>
                     <th>Actions</th>
                 </tr>
@@ -108,11 +134,8 @@ $result = $stmt->get_result();
                 <tr>
                     <td><?php echo e($row['id']); ?></td>
                     <td><?php echo e($row['student_name'] . ' (' . $row['enrollment_no'] . ')'); ?></td>
-                    
                     <td><?php echo e($row['subject_name'] ?? 'N/A'); ?></td>
-                    
-                    <td><?php echo date("d M Y", strtotime($row['attendance_date'])); ?></td>
-                    
+                    <td><?php echo e(date("d M Y", strtotime($row['attendance_date']))); ?></td>
                     <td>
                         <?php if ($row['attendance'] == 1): ?>
                             <span class="text-success fw-bold"><i class="fas fa-check-circle"></i> Present</span>

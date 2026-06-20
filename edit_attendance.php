@@ -1,24 +1,27 @@
 <?php
-session_start();
 include 'db.php';
 include 'includes/auth.php';
+include 'includes/helpers.php';
 
 $error_message = '';
-$success_message = '';
-$id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+$id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 
-// Handle form submission BEFORE rendering HTML to prevent header errors
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $id > 0) {
-    $student_id = intval($_POST['student_id']);
-    $subject_id = intval($_POST['subject_id']); // Member 3: Added Subject
-    $attendance_date = $_POST['attendance_date'];
-    $status = $_POST['status'];
+if (!$id) {
+    redirectWithStatus('view_attendance.php', 'warning', 'No valid attendance record selected for editing.');
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $student_id = filter_input(INPUT_POST, 'student_id', FILTER_VALIDATE_INT);
+    $subject_id = filter_input(INPUT_POST, 'subject_id', FILTER_VALIDATE_INT);
+    $attendance_date = $_POST['attendance_date'] ?? '';
+    $status = $_POST['status'] ?? '';
 
     $current_date = date('Y-m-d');
     $min_date = date('Y-m-d', strtotime('-30 days'));
 
-    // Member 3: Validation Logic
-    if ($status !== 'Present' && $status !== 'Absent') {
+    if (!$student_id || !$subject_id) {
+        $error_message = "Please select a valid student and subject.";
+    } elseif ($status !== 'Present' && $status !== 'Absent') {
         $error_message = "Invalid attendance status selected.";
     } elseif ($attendance_date > $current_date) {
         $error_message = "Attendance date cannot be in the future.";
@@ -27,19 +30,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $id > 0) {
     } else {
         $db_status = ($status === 'Present') ? 1 : 0;
 
-        // Security Update: Using Prepared Statements for the Update
         $stmt = $conn->prepare("UPDATE attendance SET student_id=?, subject_id=?, attendance_date=?, attendance=? WHERE id=?");
         $stmt->bind_param("iisii", $student_id, $subject_id, $attendance_date, $db_status, $id);
-        
+
         if ($stmt->execute()) {
-            // Redirect back to view page on success to match original system flow
-            header('Location: view_attendance.php?msg=updated');
-            exit();
-        } else {
-            $error_message = "Error updating record: " . $conn->error;
+            redirectWithStatus('view_attendance.php', 'success', 'Attendance record updated successfully.');
         }
+
+        $error_message = "Failed to update attendance record. Please try again.";
+        $stmt->close();
     }
 }
+
+$fetch_stmt = $conn->prepare("SELECT * FROM attendance WHERE id = ?");
+$fetch_stmt->bind_param("i", $id);
+$fetch_stmt->execute();
+$result = $fetch_stmt->get_result();
+
+if ($result->num_rows === 0) {
+    redirectWithStatus('view_attendance.php', 'warning', 'Attendance record was not found.');
+}
+
+$row = $result->fetch_assoc();
+$fetch_stmt->close();
 ?>
 
 <!DOCTYPE html>
@@ -58,24 +71,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $id > 0) {
     <div class="content">
         <h2>Edit Attendance</h2>
 
-        <?php 
-        // Display Validation Errors if any
-        if ($error_message) {
-            echo "<div class='alert alert-danger'>$error_message</div>";
-        }
+        <?php if ($error_message !== '') { ?>
+            <div class="alert alert-danger"><?php echo e($error_message); ?></div>
+        <?php } ?>
 
-        if ($id > 0) {
-            // Securely fetch existing data
-            $fetch_stmt = $conn->prepare("SELECT * FROM attendance WHERE id = ?");
-            $fetch_stmt->bind_param("i", $id);
-            $fetch_stmt->execute();
-            $result = $fetch_stmt->get_result();
-
-            if ($result->num_rows > 0) {
-                $row = $result->fetch_assoc();
-        ?>
-
-        <form action="edit_attendance.php?id=<?php echo $id; ?>" method="POST">
+        <form action="edit_attendance.php?id=<?php echo e($id); ?>" method="POST">
             <div class="mb-3">
                 <label for="student_id" class="form-label">Student</label>
                 <select class="form-control" id="student_id" name="student_id" required>
@@ -86,7 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $id > 0) {
                     if ($student_result->num_rows > 0) {
                         while($s_row = $student_result->fetch_assoc()) {
                             $selected = ($s_row['id'] == $row['student_id']) ? "selected" : "";
-                            echo "<option value='".$s_row['id']."' $selected>".$s_row['student_name']." (".$s_row['enrollment_no'].")</option>";
+                            echo '<option value="' . e($s_row['id']) . '" ' . $selected . '>' . e($s_row['student_name'] . ' (' . $s_row['enrollment_no'] . ')') . '</option>';
                         }
                     }
                     ?>
@@ -102,9 +102,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $id > 0) {
                     $subject_result = $conn->query($subject_query);
                     if ($subject_result->num_rows > 0) {
                         while($sub_row = $subject_result->fetch_assoc()) {
-                            // Check if current subject matches
                             $selected = (isset($row['subject_id']) && $sub_row['id'] == $row['subject_id']) ? "selected" : "";
-                            echo "<option value='".$sub_row['id']."' $selected>".$sub_row['subject_name']."</option>";
+                            echo '<option value="' . e($sub_row['id']) . '" ' . $selected . '>' . e($sub_row['subject_name']) . '</option>';
                         }
                     }
                     ?>
@@ -116,7 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $id > 0) {
                 <input type="date" class="form-control" id="attendance_date" name="attendance_date" 
                        max="<?php echo date('Y-m-d'); ?>" 
                        min="<?php echo date('Y-m-d', strtotime('-30 days')); ?>" 
-                       value="<?php echo htmlspecialchars($row['attendance_date']); ?>" required>
+                       value="<?php echo e($row['attendance_date']); ?>" required>
             </div>
 
             <div class="mb-3">
@@ -135,15 +134,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $id > 0) {
 
             <button type="submit" class="btn btn-primary">Update Attendance</button>
         </form>
-
-        <?php
-            } else {
-                echo "<div class='alert alert-danger'>Attendance record not found.</div>";
-            }
-        } else {
-            echo "<div class='alert alert-danger'>No attendance ID specified.</div>";
-        }
-        ?>
 
     </div>
 </body>

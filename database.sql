@@ -20,7 +20,7 @@ SET time_zone = "+00:00";
 CREATE TABLE `attendance` (
   `id` int(11) NOT NULL,
   `student_id` int(11) DEFAULT NULL,
-  `subject_id` int(11) DEFAULT NULL, /* Member 3 Enhancement: Added subject mapping */
+  `subject_id` int(11) DEFAULT NULL,
   `attendance_date` date DEFAULT NULL,
   `attendance` int(10) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -35,7 +35,7 @@ CREATE TABLE `marks` (
   `id` int(11) NOT NULL,
   `student_id` int(11) DEFAULT NULL,
   `subject_id` int(11) DEFAULT NULL,
-  `marks` int(11) DEFAULT NULL
+  `marks` decimal(5,2) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -49,7 +49,7 @@ CREATE TABLE `students` (
   `enrollment_no` varchar(50) NOT NULL,
   `student_name` varchar(100) NOT NULL,
   `department` text NOT NULL,
-  `phone` varchar(10) NOT NULL
+  `phone` varchar(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -90,7 +90,7 @@ INSERT INTO `users` (`id`, `username`, `password`) VALUES
 ALTER TABLE `attendance`
   ADD PRIMARY KEY (`id`),
   ADD KEY `student_id` (`student_id`),
-  ADD KEY `subject_id` (`subject_id`); /* Member 3: Added Index */
+  ADD KEY `subject_id` (`subject_id`);
 
 ALTER TABLE `marks`
   ADD PRIMARY KEY (`id`),
@@ -132,7 +132,7 @@ ALTER TABLE `users`
 
 ALTER TABLE `attendance`
   ADD CONSTRAINT `attendance_ibfk_1` FOREIGN KEY (`student_id`) REFERENCES `students` (`id`),
-  ADD CONSTRAINT `attendance_ibfk_2` FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`id`); /* Member 3: Added Foreign Key */
+  ADD CONSTRAINT `attendance_ibfk_2` FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`id`);
 
 ALTER TABLE `marks`
   ADD CONSTRAINT `marks_ibfk_1` FOREIGN KEY (`student_id`) REFERENCES `students` (`id`),

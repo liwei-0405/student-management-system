@@ -20,13 +20,21 @@ if ($subject_result->num_rows === 0) {
 
 $subject = $subject_result->fetch_assoc();
 
-$dependency_stmt = $conn->prepare("SELECT COUNT(*) AS marks_count FROM marks WHERE subject_id = ?");
-$dependency_stmt->bind_param("i", $id);
+$dependency_stmt = $conn->prepare("
+    SELECT
+        (SELECT COUNT(*) FROM marks WHERE subject_id = ?) AS marks_count,
+        (SELECT COUNT(*) FROM attendance WHERE subject_id = ?) AS attendance_count
+");
+$dependency_stmt->bind_param("ii", $id, $id);
 $dependency_stmt->execute();
 $dependencies = $dependency_stmt->get_result()->fetch_assoc();
 
-if ((int) $dependencies['marks_count'] > 0) {
-    redirectWithStatus('view_subjects.php', 'danger', 'Cannot delete ' . $subject['subject_name'] . ' because related marks records still exist.');
+if ((int) $dependencies['marks_count'] > 0 || (int) $dependencies['attendance_count'] > 0) {
+    redirectWithStatus(
+        'view_subjects.php',
+        'danger',
+        'Cannot delete ' . $subject['subject_name'] . ' because related marks or attendance records still exist.'
+    );
 }
 
 $delete_stmt = $conn->prepare("DELETE FROM subjects WHERE id = ?");
