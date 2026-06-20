@@ -37,7 +37,9 @@ if (!empty($where)) {
 $sql .= " ORDER BY marks.id DESC";
 
 $stmt = $conn->prepare($sql);
-bindParams($stmt, $types, $params);
+if (!empty($types)) {
+    bindParams($stmt, $types, $params);
+}
 $stmt->execute();
 $result = $stmt->get_result();
 
@@ -78,8 +80,8 @@ $subject_result = $conn->query("SELECT id, subject_name FROM subjects ORDER BY s
                 </select>
             </div>
             <div class="col-md-3 filter-actions">
-                <button type="submit" class="btn btn-primary">Filter</button>
-                <a href="view_marks.php" class="btn btn-secondary">Reset</a>
+                <button type="submit" class="btn btn-primary mt-4">Filter</button>
+                <a href="view_marks.php" class="btn btn-secondary mt-4">Reset</a>
             </div>
         </form>
 
@@ -100,7 +102,18 @@ $subject_result = $conn->query("SELECT id, subject_name FROM subjects ORDER BY s
                     <td><?php echo e($row['id']); ?></td>
                     <td><?php echo e($row['student_name'] . ' (' . $row['enrollment_no'] . ')'); ?></td>
                     <td><?php echo e($row['subject_name']); ?></td>
-                    <td><?php echo e($row['marks']); ?></td>
+                    
+                    <td>
+                        <?php 
+                        $markClass = 'bg-success'; // Pass
+                        if ($row['marks'] < 50) $markClass = 'bg-danger'; // Fail
+                        elseif ($row['marks'] >= 80) $markClass = 'bg-primary'; // Distinction
+                        ?>
+                        <span class="badge <?php echo $markClass; ?> fs-6">
+                            <?php echo e($row['marks']); ?>
+                        </span>
+                    </td>
+                    
                     <td>
                         <a href="edit_marks.php?id=<?php echo e($row['id']); ?>" class="btn btn-warning btn-sm">Edit</a>
                         <a href="delete_marks.php?id=<?php echo e($row['id']); ?>" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this mark record?');">Delete</a>
@@ -108,7 +121,7 @@ $subject_result = $conn->query("SELECT id, subject_name FROM subjects ORDER BY s
                 </tr>
                 <?php } ?>
                 <?php } else { ?>
-                    <tr><td colspan="5">No marks found.</td></tr>
+                    <tr><td colspan="5" class="text-center">No marks found.</td></tr>
                 <?php } ?>
             </tbody>
         </table>
