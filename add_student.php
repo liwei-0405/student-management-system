@@ -1,11 +1,7 @@
-<?php 
-include 'db.php'; 
-session_start();
-
-if (!isset($_SESSION['username'])) {
-    header("Location: login.php");
-    exit();
-}
+<?php
+include 'db.php';
+include 'includes/auth.php';
+include 'includes/helpers.php';
 
 $success = "";
 $error = "";
@@ -69,29 +65,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 
 <body>
-    <div class="sidebar">
-        <h4><b>Navigation</b></h4>
-        <a href="index.php">Home</a>
-        <a href="add_attendance.php">Add Attendance</a>
-        <a href="view_attendance.php">View Attendance</a>
-        <a href="add_marks.php">Add Marks</a>
-        <a href="view_marks.php">View Marks</a>
-        <a href="add_student.php">Add Student</a>
-        <a href="view_students.php">View Students</a>
-        <a href="add_subject.php">Add Subject</a>
-        <a href="view_subjects.php">View Subjects</a>
-        <a href="logout.php" class="nav-link" style="color: black;"><i class="fas fa-sign-out-alt"></i> Logout</a>
-    </div>
+    <?php include 'includes/sidebar.php'; ?>
 
     <div class="content">
         <h2>Add Student</h2>
 
         <?php if (!empty($success)) { ?>
-            <div class="alert alert-success"><?php echo $success; ?></div>
+            <div class="alert alert-success"><?php echo e($success); ?></div>
         <?php } ?>
 
         <?php if (!empty($error)) { ?>
-            <div class="alert alert-danger"><?php echo $error; ?></div>
+            <div class="alert alert-danger"><?php echo e($error); ?></div>
         <?php } ?>
 
         <form action="add_student.php" method="POST">
@@ -101,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                        class="form-control" 
                        id="enrollment_no" 
                        name="enrollment_no" 
-                       value="<?php echo htmlspecialchars($enrollment_no); ?>" 
+                       value="<?php echo e($enrollment_no); ?>"
                        required>
             </div>
 
@@ -111,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                        class="form-control" 
                        id="student_name" 
                        name="student_name" 
-                       value="<?php echo htmlspecialchars($student_name); ?>" 
+                       value="<?php echo e($student_name); ?>"
                        required>
             </div>
 
@@ -133,7 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                        class="form-control" 
                        id="phone" 
                        name="phone" 
-                       value="<?php echo htmlspecialchars($phone); ?>" 
+                       value="<?php echo e($phone); ?>"
                        required>
             </div>
 

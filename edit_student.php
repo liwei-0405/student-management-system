@@ -1,33 +1,66 @@
 <?php
 include 'db.php';
 include 'includes/auth.php';
+include 'includes/helpers.php';
 
-// Check if the id is set
-if (isset($_GET['id'])) {
-    $id = $_GET['id'];
-    
-    // Fetch the student data
-    $sql = "SELECT * FROM students WHERE id='$id'";
-    $result = $conn->query($sql);
-    $student = $result->fetch_assoc();
+$error = "";
+$id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+
+if (!$id) {
+    redirectWithStatus('view_students.php', 'warning', 'No valid student selected for editing.');
 }
 
-// Update student data
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $enrollment_no = $_POST['enrollment_no'];
-    $student_name = $_POST['student_name'];
-    $department = $_POST['department'];
-    $phone = $_POST['phone'];
+$student_stmt = $conn->prepare("SELECT * FROM students WHERE id = ?");
+$student_stmt->bind_param("i", $id);
+$student_stmt->execute();
+$student_result = $student_stmt->get_result();
 
-    // Correctly construct the UPDATE statement
-    $sql = "UPDATE students SET enrollment_no='$enrollment_no', student_name='$student_name', department='$department', phone='$phone' WHERE id='$id'";
-    
-    if ($conn->query($sql) === TRUE) {
-        echo "<div class='alert alert-success'>Student updated successfully.</div>";
-        header('Location: view_students.php');
+if ($student_result->num_rows === 0) {
+    redirectWithStatus('view_students.php', 'warning', 'Student record was not found.');
+}
+
+$student = $student_result->fetch_assoc();
+$student_stmt->close();
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $enrollment_no = trim($_POST['enrollment_no'] ?? '');
+    $student_name = trim($_POST['student_name'] ?? '');
+    $department = trim($_POST['department'] ?? '');
+    $phone = trim($_POST['phone'] ?? '');
+
+    if (!preg_match('/^[0-9]{10,11}$/', $phone)) {
+        $error = "Invalid phone number. Phone number must contain 10 to 11 digits only.";
     } else {
-        echo "<div class='alert alert-danger'>Error: " . $sql . "<br>" . $conn->error . "</div>";
+        $check_stmt = $conn->prepare("SELECT id FROM students WHERE enrollment_no = ? AND id != ?");
+        $check_stmt->bind_param("si", $enrollment_no, $id);
+        $check_stmt->execute();
+        $check_stmt->store_result();
+
+        if ($check_stmt->num_rows > 0) {
+            $error = "Enrollment number already exists.";
+        } else {
+            $update_stmt = $conn->prepare(
+                "UPDATE students SET enrollment_no = ?, student_name = ?, department = ?, phone = ? WHERE id = ?"
+            );
+            $update_stmt->bind_param("ssssi", $enrollment_no, $student_name, $department, $phone, $id);
+
+            if ($update_stmt->execute()) {
+                redirectWithStatus('view_students.php', 'success', 'Student updated successfully.');
+            }
+
+            $error = "Failed to update student. Please try again.";
+            $update_stmt->close();
+        }
+
+        $check_stmt->close();
     }
+
+    $student = [
+        'enrollment_no' => $enrollment_no,
+        'student_name' => $student_name,
+        'department' => $department,
+        'phone' => $phone,
+    ];
 }
 ?>
 
@@ -46,22 +79,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <div class="content">
         <h2>Edit Student</h2>
-        <form action="edit_student.php?id=<?php echo $id; ?>" method="POST">
+
+        <?php if ($error !== '') { ?>
+            <div class="alert alert-danger"><?php echo e($error); ?></div>
+        <?php } ?>
+
+        <form action="edit_student.php?id=<?php echo e($id); ?>" method="POST">
             <div class="mb-3">
                 <label for="enrollment_no" class="form-label">Enrollment No</label>
-                <input type="text" class="form-control" id="enrollment_no" name="enrollment_no" value="<?php echo $student['enrollment_no']; ?>" required>
+                <input type="text" class="form-control" id="enrollment_no" name="enrollment_no"
+                       value="<?php echo e($student['enrollment_no']); ?>" required>
             </div>
             <div class="mb-3">
-                <label for="name" class="form-label">Student Name</label>
-                <input type="text" class="form-control" id="student_name" name="student_name" value="<?php echo $student['student_name']; ?>" required>
+                <label for="student_name" class="form-label">Student Name</label>
+                <input type="text" class="form-control" id="student_name" name="student_name"
+                       value="<?php echo e($student['student_name']); ?>" required>
             </div>
             <div class="mb-3">
                 <label for="department" class="form-label">Department</label>
-                <input type="text" class="form-control" id="department" name="department" value="<?php echo $student['department']; ?>" required>
+                <select class="form-control" id="department" name="department" required>
+                    <option value="">Select Department</option>
+                    <?php
+                    $departments = [
+                        'Computer Science',
+                        'Information Technology',
+                        'Software Engineering',
+                        'Business Management',
+                        'Accounting',
+                    ];
+                    foreach ($departments as $option) {
+                        $selected = $student['department'] === $option ? 'selected' : '';
+                        echo '<option value="' . e($option) . '" ' . $selected . '>' . e($option) . '</option>';
+                    }
+                    ?>
+                </select>
             </div>
             <div class="mb-3">
                 <label for="phone" class="form-label">Phone</label>
-                <input type="number" class="form-control" id="phone" name="phone" value="<?php echo $student['phone']; ?>" required>
+                <input type="text" class="form-control" id="phone" name="phone"
+                       value="<?php echo e($student['phone']); ?>" required>
             </div>
             <button type="submit" class="btn btn-primary">Update Student</button>
         </form>
