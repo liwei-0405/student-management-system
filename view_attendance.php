@@ -1,7 +1,7 @@
 <?php
 include 'db.php';
 include 'includes/auth.php';
-include 'includes/helpers.php';
+include 'includes/helpers.php'; // Member 4's helper functions
 
 $search = trim($_GET['search'] ?? '');
 $attendance_date = trim($_GET['attendance_date'] ?? '');
@@ -33,16 +33,23 @@ if ($attendance_status !== '') {
     $types .= 'i';
 }
 
-$sql = "SELECT attendance.id, attendance.attendance_date, attendance.attendance, students.student_name, students.enrollment_no
+// Member 3 Enhancement: Added subjects JOIN and subject_name to SELECT
+$sql = "SELECT attendance.id, attendance.attendance_date, attendance.attendance, 
+               students.student_name, students.enrollment_no,
+               subjects.subject_name
         FROM attendance
-        LEFT JOIN students ON attendance.student_id = students.id";
+        LEFT JOIN students ON attendance.student_id = students.id
+        LEFT JOIN subjects ON attendance.subject_id = subjects.id"; // Subject JOIN
+
 if (!empty($where)) {
     $sql .= " WHERE " . implode(" AND ", $where);
 }
 $sql .= " ORDER BY attendance.attendance_date DESC, attendance.id DESC";
 
 $stmt = $conn->prepare($sql);
-bindParams($stmt, $types, $params);
+if (!empty($types)) {
+    bindParams($stmt, $types, $params);
+}
 $stmt->execute();
 $result = $stmt->get_result();
 ?>
@@ -62,9 +69,7 @@ $result = $stmt->get_result();
 
     <div class="content">
         <h2>Attendance Records</h2>
-        <?php displayStatusMessage(); ?>
-
-        <form method="GET" action="view_attendance.php" class="filter-form row g-3 mb-4">
+        <?php displayStatusMessage(); ?> <form method="GET" action="view_attendance.php" class="filter-form row g-3 mb-4">
             <div class="col-md-4">
                 <label for="search" class="form-label">Search Student</label>
                 <input type="text" class="form-control" id="search" name="search" value="<?php echo e($search); ?>" placeholder="Name or enrollment no">
@@ -82,8 +87,8 @@ $result = $stmt->get_result();
                 </select>
             </div>
             <div class="col-md-2 filter-actions">
-                <button type="submit" class="btn btn-primary">Filter</button>
-                <a href="view_attendance.php" class="btn btn-secondary">Reset</a>
+                <button type="submit" class="btn btn-primary mt-4">Filter</button>
+                <a href="view_attendance.php" class="btn btn-secondary mt-4">Reset</a>
             </div>
         </form>
 
@@ -92,7 +97,7 @@ $result = $stmt->get_result();
                 <tr>
                     <th>ID</th>
                     <th>Student</th>
-                    <th>Date</th>
+                    <th>Subject</th> <th>Date</th>
                     <th>Attendance</th>
                     <th>Actions</th>
                 </tr>
@@ -103,8 +108,18 @@ $result = $stmt->get_result();
                 <tr>
                     <td><?php echo e($row['id']); ?></td>
                     <td><?php echo e($row['student_name'] . ' (' . $row['enrollment_no'] . ')'); ?></td>
-                    <td><?php echo e($row['attendance_date']); ?></td>
-                    <td><?php echo $row['attendance'] == 1 ? 'Present' : 'Absent'; ?></td>
+                    
+                    <td><?php echo e($row['subject_name'] ?? 'N/A'); ?></td>
+                    
+                    <td><?php echo date("d M Y", strtotime($row['attendance_date'])); ?></td>
+                    
+                    <td>
+                        <?php if ($row['attendance'] == 1): ?>
+                            <span class="text-success fw-bold"><i class="fas fa-check-circle"></i> Present</span>
+                        <?php else: ?>
+                            <span class="text-danger fw-bold"><i class="fas fa-times-circle"></i> Absent</span>
+                        <?php endif; ?>
+                    </td>
                     <td>
                         <a href="edit_attendance.php?id=<?php echo e($row['id']); ?>" class="btn btn-warning btn-sm">Edit</a>
                         <a href="delete_attendance.php?id=<?php echo e($row['id']); ?>" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this attendance record?');">Delete</a>
@@ -112,7 +127,7 @@ $result = $stmt->get_result();
                 </tr>
                 <?php } ?>
                 <?php } else { ?>
-                    <tr><td colspan="5">No attendance records found.</td></tr>
+                    <tr><td colspan="6" class="text-center">No attendance records found.</td></tr>
                 <?php } ?>
             </tbody>
         </table>
