@@ -1,91 +1,224 @@
 # Student Management System
 
-A fully functional **Student Management System** built using **PHP**, **MySQL**, **HTML**, **CSS**, and **Bootstrap**. This application provides a streamlined way to manage students, track their attendance, record marks, and handle subject assignments in an intuitive and user-friendly interface.
+A PHP and MySQL web application for managing students, subjects, marks, and
+attendance records. This repository extends the original open-source project
+with validation, safer record management, search and filtering, and reusable
+authentication and navigation components.
 
-## 🚀 Features
+## Features
 
-- **Student Management**: Easily add, view, edit, and delete student records.
-- **Attendance Tracking**: Record and track attendance for each student.
-- **Marks Management**: Record and view marks for various subjects.
-- **Subject Management**: Manage subject list with options to add, view, edit, and delete subjects.
-- **Authentication**: Secure login system to ensure data privacy and control access.
-- **Responsive UI**: Sidebar navigation for easy page access, and a modern design.
+### Authentication
 
-## 🛠️ Technologies Used
+- User registration and login
+- Password confirmation and minimum eight-character password validation
+- Duplicate username detection
+- Session-based protection for restricted pages
+- Reusable authentication checks across the application
 
-- **Frontend**: HTML, CSS, Bootstrap
-- **Backend**: PHP, MySQL
-- **Libraries**: Select2 (for searchable dropdowns)
+### Student Management
 
-## 📸 Screenshots
-![Dashboard Screenshot](https://github.com/user-attachments/assets/1458f1a1-6da1-440c-8984-de26cd958a29)
----
-![View Student Screenshot](https://github.com/user-attachments/assets/a1f44e89-46e1-41a1-8c37-6731529617b1)
----
-![Add Student Screenshot](https://github.com/user-attachments/assets/5bc0e03a-4e81-4559-891e-7fb9722dcdd8)
+- Add, view, edit, and delete student records
+- Duplicate enrollment-number detection
+- Phone-number validation for 10- or 11-digit numbers
+- Standardized department selection
+- Search by student name or enrollment number
+- Filter by department
 
+### Subject Management
 
-## 📂 Folder Structure
+- Add, view, edit, and delete subjects
+- Duplicate subject-name detection
+- Subject search
+- Safe deletion when marks or attendance records still reference a subject
 
-- `index.php` - Main dashboard page.
-- `db.php` - Database connection file.
-- `add_student.php`, `view_student.php`, etc. - Feature-specific files.
-- `assets/` - Folder for CSS, JavaScript, and other assets.
+### Marks Management
 
-## 📝 Getting Started
+- Add, view, edit, and delete marks
+- Decimal marks from 0.00 to 100.00
+- Duplicate student-subject marks prevention
+- Search by student, enrollment number, or subject
+- Filter by subject
+- Display student and subject names instead of raw database IDs
 
-### Prerequisites
+### Attendance Management
 
-- [XAMPP](https://www.apachefriends.org/index.html) or similar (for running PHP and MySQL).
-- Web browser to view the application.
+- Add, view, edit, and delete attendance records
+- Link attendance records to both students and subjects
+- Present/Absent selection
+- Prevent future dates and dates more than 30 days in the past
+- Search by student, enrollment number, or subject
+- Filter by subject, date, and attendance status
+- Display meaningful student and subject information
 
-### Installation
+### Maintainability and Record Safety
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/sayan365/student-management-system.git
-   
-2. **Move the project to XAMPP's htdocs folder:**
+- Shared authentication component in `includes/auth.php`
+- Shared sidebar navigation in `includes/sidebar.php`
+- Shared escaping, prepared-statement, and status-message helpers
+- Dependency checking before deleting referenced students or subjects
+- User-friendly feedback instead of raw database errors
+- Prepared statements in the enhanced data-management operations
 
-    - Place the cloned `student-management-system` folder inside the `htdocs` directory of your XAMPP installation.
+## Technologies
 
-3. **Set up the database:**
+- PHP 8.2
+- MySQL / MariaDB
+- HTML5 and CSS3
+- Bootstrap 5
+- Font Awesome
+- XAMPP
 
-   - Open phpMyAdmin (usually accessible at [http://localhost/phpmyadmin](http://localhost/phpmyadmin)).
-   - Create a new database (e.g., `student_system`).
-   - Import the provided SQL file (`database.sql`) in the repository to set up the necessary tables.
+## Project Structure
 
-4. **Update database configurations:**
+```text
+student-management-system/
+|-- assets/
+|   `-- style.css
+|-- includes/
+|   |-- auth.php
+|   |-- helpers.php
+|   `-- sidebar.php
+|-- add_*.php
+|-- edit_*.php
+|-- view_*.php
+|-- delete_*.php
+|-- index.php
+|-- login.php
+|-- register.php
+|-- logout.php
+|-- db.php
+|-- database.sql
+`-- README.md
+```
 
-   - In the `db.php` file, ensure the database credentials (username, password, and database name) match your local environment.
+## Installation
 
-### Running the Application
-1. Start XAMPP:
- - Open XAMPP and start Apache and MySQL services.
+### 1. Prerequisites
 
-3. Access the Application:
- - Go to http://localhost/student-management-system/ in your browser.
+Install XAMPP or another environment that provides:
 
-3. Login:
- - Use your credentials to log in (configured in the database).
+- Apache
+- PHP 8.2 or later
+- MySQL or MariaDB
 
-### 🔄 Usage
-**Dashboard:** Access all main features from the main dashboard after logging in.
-**Manage Students:** Add, edit, view, or delete student information.
-**Track Attendance:** Record and view attendance details.
-**Manage Marks:** Add and view marks for each subject and student.
-**Manage Subjects:** Add, edit, view, or delete subject records.
-### 🔒 Authentication and Logout
-Authenticated access is required. Unauthorized users are redirected to the login page. Use the "Logout" button in the sidebar to end the session.
+### 2. Clone the Repository
 
-### 🤝 Contributing
-Contributions are welcome! To contribute:
-- Fork the repository.
-- Create a branch with descriptive naming (e.g., feature/new-feature).
-- Make your changes and create a pull request.
-  
-### 📄 License
-This open-source project is available under the [MIT License](LICENSE).
----
-**Author**: Sayan  
-For any inquiries, feel free to contact me via GitHub or other platforms.
+Clone the group repository into the XAMPP `htdocs` directory:
+
+```bash
+git clone https://github.com/liwei-0405/student-management-system.git
+```
+
+The expected project location on Windows is:
+
+```text
+C:\xampp\htdocs\student-management-system
+```
+
+### 3. Create the Database
+
+1. Start Apache and MySQL from the XAMPP Control Panel.
+2. Open [phpMyAdmin](http://localhost/phpmyadmin).
+3. Create a database with the exact name:
+
+```text
+student_db
+```
+
+4. Select `student_db`.
+5. Open the **Import** tab.
+6. Import the provided `database.sql` file.
+
+The application is configured to use `student_db` in `db.php`. Using a
+different database name requires updating the `$dbname` value in `db.php`.
+
+The imported schema includes:
+
+- `users`
+- `students`
+- `subjects`
+- `marks`
+- `attendance`
+
+It also includes the student-subject relationships used by marks and the
+student-subject relationships used by attendance.
+
+### 4. Verify the Database Configuration
+
+The default local XAMPP configuration in `db.php` is:
+
+```php
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "student_db";
+```
+
+Update these values only if your local MySQL credentials are different.
+
+### 5. Run the Application
+
+Open:
+
+[http://localhost/student-management-system/](http://localhost/student-management-system/)
+
+Default administrator account:
+
+```text
+Username: admin
+Password: admin
+```
+
+## Usage
+
+1. Log in using an existing account or create a new account.
+2. Add subjects before entering marks or attendance.
+3. Add student records with a unique enrollment number and valid phone number.
+4. Record marks by selecting a student and subject.
+5. Record attendance by selecting a student, subject, date, and status.
+6. Use the search and filter controls on the record-viewing pages.
+7. Remove related marks or attendance records before deleting referenced
+   students or subjects.
+
+## Validation and Testing
+
+To check one PHP file for syntax errors:
+
+```bash
+php -l index.php
+```
+
+To check every PHP file using PowerShell:
+
+```powershell
+Get-ChildItem -Recurse -Filter *.php | ForEach-Object { php -l $_.FullName }
+```
+
+The enhanced system should also be tested through the browser using valid,
+invalid, duplicate, and dependency-related scenarios.
+
+## Version-Control Workflow
+
+Contributors should work on separate feature branches and submit pull requests
+instead of pushing changes directly to `main`.
+
+```bash
+git checkout main
+git pull origin main
+git checkout -b feature/your-feature-name
+```
+
+After testing:
+
+```bash
+git add .
+git commit -m "Describe the completed change"
+git push origin feature/your-feature-name
+```
+
+## Project Background
+
+This repository is based on the original
+[sayan365/student-management-system](https://github.com/sayan365/student-management-system)
+project. The maintenance and enhancement work was completed for the CSE6364
+Software Evolution and Maintenance group project.
